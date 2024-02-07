@@ -1,0 +1,307 @@
+---
+title: "Figure 1 Vignette"
+author: "Jianhong Ou"
+vignette: >
+  %\VignetteIndexEntry{Figure 1 Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output:
+  html_document:
+  theme: simplex
+  toc: true
+  toc_float: true
+  toc_depth: 4
+  fig_caption: true
+---
+
+```{r preload, echo=FALSE, results="hide", warning=FALSE}
+suppressPackageStartupMessages({
+  library(trackViewer)
+  library(InteractionSet)
+  library(org.Dr.eg.db)
+  library(GenomicFeatures)
+  library(GenomeInfoDb)
+  library(GenomicRanges)
+  library(RMariaDB)
+  library(ChIPpeakAnno)
+})
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+# Introduction
+The `loopBouquetPlot` is a new method introduced by **trackViewer** package to visualize genomic interactions along with annotation for NGS dataset such as HiC, HiChIP, PLAC-seq, ChIA-PET, and HiCAR data.
+
+The Fig 1 is the showcase for the `loopBouquetPlot` compared to the heatmaps and links plot. Additional showcase are available at [`loopBouquetPlot` for Brain Comparative Epigenome](BrainComparativeEpigenome.html). There are several steps to repeat the `loopBouquetPlot`:
+
+1. Prepare the annotations
+
+2. Import the called interactions
+
+3. Import the ATAC-seq signals if available
+
+4. Plot the data by `loopBouquetPlot` function.
+
+# Load libraries
+```{r loadPkg}
+library(trackViewer)
+library(InteractionSet)
+library(org.Dr.eg.db)
+library(GenomicFeatures)
+library(GenomeInfoDb)
+library(GenomicRanges)
+library(RMariaDB)
+library(ChIPpeakAnno)
+library(grid)
+```
+
+# Prepare annotation
+```{r gene}
+## prepare the TxDb object,
+## or load the refseq gene annotation by library(TxDb.Drerio.UCSC.danRer11.refGene)
+txdb <- GenomicFeatures::makeTxDbFromEnsembl(release=109,
+                                             organism='Danio rerio')
+## set the silencer coordinates
+silencer <- GRanges("chr5", IRanges(21795000, 21800000))
+## set data range
+range <- GRanges("chr5", IRanges(21100000, 22100000))
+## set the plot range
+fig1PlotRange <- GRanges('chr5', IRanges(21300000, 2.2e+07))
+
+## prepare gene annotation
+genes <- GenomicFeatures::genes(txdb)
+GenomeInfoDb::seqlevelsStyle(genes) <- "UCSC"
+genes <- subsetByOverlaps(genes, range, ignore.strand=TRUE)
+id <- genes$gene_id
+eid <- ChIPpeakAnno::xget(id, org.Dr.egENSEMBL2EG, output = "first")
+symbol <- id
+symbol[!is.na(eid)] <- ChIPpeakAnno::xget(eid[!is.na(eid)],
+                                          org.Dr.egSYMBOL,
+                                          output = "first")
+names(symbol) <- id
+
+feature.gr <- subsetByOverlaps(genes, range, ignore.strand=TRUE)
+feature.gr$label <- symbol[feature.gr$gene_id]
+# remove genes without symbols to clean the plot
+feature.gr <- feature.gr[!grepl('ENSDARG', feature.gr$label)]
+## show selected gene symbols only
+feature.gr$label[!feature.gr$label %in% c('tenm1', 'smarca1', 'sh2d1aa')] <- ''
+feature.gr$type <- 'gene'
+feature.gr$col <- 1 # set black color to uninterested genes
+feature.gr$col[feature.gr$label %in% c('tenm1', 'smarca1', 'sh2d1aa')] <- 
+  c(2, 4, 5) ## set the colors for the given genes
+silencer$label <- 'silencer'
+silencer$type <- 'cRE' ## cis regulatory element
+silencer$col <- 3 ## set the color to green
+feature.gr <- c(feature.gr, silencer)
+```
+
+# Subfigure __b__ and __c__
+
+## Import data for `loopBouquetPlot`
+```{r import4loopBouquetPlot}
+## set the data folder, all data are available in the extdata folder of this package
+extdata <- system.file('extdata', package='loopBouquetPlotDocumentation')
+## list all interaction BEDPE files
+(interactions <- dir(extdata,
+                     "10k.2.sig3Dinteractions.bedpe",
+                     full.names = TRUE))
+## import the loop for `loopBouquetPlot`
+loops_loopBouquet <- lapply(interactions, function(.ele){
+  ## read bedpe as text file
+  .loop <- read.delim(.ele, header = FALSE)
+  ## create GInteractions object
+  .loop <- with(.loop, InteractionSet::GInteractions(
+    ## narrow the interaction region for better visualization effect
+    GRanges(V1, IRanges(V2+2501, V3-2500)),
+    GRanges(V4, IRanges(V5+2501, V6-2500)),
+    ## set the score to log2 value to decrease the difference of signals
+    score = log2(V8)
+  ))
+  ## subset the data with given range
+  .loop <- subsetByOverlaps(.loop, range)
+  ## remove the interchromosal interactions
+  .loop <- .loop[seqnames(first(.loop))==seqnames(range)[1] &
+                   seqnames(second(.loop))==seqnames(range)[1]]
+})
+## create names for the data for each sample
+(names(loops_loopBouquet) <- sub(".10k.*$", " interactions",
+                                 basename(interactions)))
+
+## list all teh ATAC-seq bigwig files
+(bws <- dir(extdata,
+            "bigWig",
+            full.names = TRUE))
+## import the ATAC-seq signales
+## the ATAC-seq signals are HiCAR R2 read coverage
+bwsigs <- lapply(bws, trackViewer::importScore, format="BigWig", ranges=range)
+## create names for the data for each sample
+(names(bwsigs) <-sub('.bigWig', ' ATAC-seq', basename(bws)))
+## check the order of the samples are same for ATAC-seq signals and loops
+stopifnot(all(sub(' .*$', '', names(bwsigs))==
+                sub(' .*$', '', names(loops_loopBouquet))))
+```
+
+## Plot the data by `loopBouquetPlot` for subfigure __b__ and __c__
+```{r loopBouquetPlot}
+set.seed(1) ## set seed to control the plot layout
+for(i in seq_along(loops_loopBouquet)){
+  trackViewer::loopBouquetPlot(loops_loopBouquet[[i]],
+                               fig1PlotRange,
+                               feature.gr,
+                               atacSig=bwsigs[[i]],
+                               lwd.backbone=2,
+                               col.backbone='gray',
+                               col.backbone_background = 'gray70',
+                               lwd.gene = 2,
+                               show_coor = TRUE,
+                               coor_tick_unit = 1e4,
+                               coor_mark_interval=2e5,
+                               length.arrow=0.1,
+                               show_edges = FALSE)
+  grid::grid.text(label=names(loops_loopBouquet)[i],
+            x=.15, y=.9)
+}
+```
+
+# Subfigure __a__
+
+There are several steps to repeat the heatmaps and links plot:
+
+1. Prepare the annotations
+
+2. Import the ATAC-seq signals
+
+3. Import the called interactions for link tracks
+
+4. Import the interactions for heatmap tracks
+
+5. Plot the data by `viewTracks` function.
+
+## Import data for subfigure __a__
+```{r import4viewTracks}
+## import the interactions as 'track' objects
+loops <- lapply(interactions, function(.ele){
+  .loop <- read.delim(.ele, header = FALSE)
+  .loop <- with(.loop, GInteractions(
+    GRanges(V1, IRanges(V2+2501, V3-2500)),
+    GRanges(V4, IRanges(V5+2501, V6-2500)),
+    score = log2(V8)
+  ))
+  .loop <- gi2track(.loop)
+  ## set the tracktype to 'link' to plot as links
+  setTrackStyleParam(.loop, "tracktype", "link")
+  .loop
+})
+names(loops) <- sub(".10k.*$", " interactions", basename(interactions))
+## get the hic files. Here we use the prepared GInteraction objects
+(hics <- dir(extdata,
+             "10000.ginteractions.rds",
+             full.names = TRUE))
+## set the sample names
+(names(hics) <- sub("MAPS_signals_(.*?).10000.ginteractions.rds", "\\1 heatmap",
+                    basename(hics)))
+gis <- lapply(hics, function(.ele){
+  ## The RDS files were generated by trackViewer function `importGInteractions`
+  ## from the HIC file. Because the MAPS signal are values normalized by
+  ## fitting models, we set the matrixType to 'observed' and normalization to 'NONE'
+  ## range.ext are ranges with extention to include all the intrachromosal interactions
+  # range.ext <- range
+  # start(range.ext) <- start(range.ext) - 10000000
+  # end(range.ext) <- end(range.ext) + 10000000
+  # importGInteractions(.ele, ranges = range.ext,
+  #                     format = "hic",
+  #                     resolution = 10000,
+  #                     out = "GInteractions",
+  #                     normalization = "NONE",
+  #                     matrixType = "observed")
+  .ele <- readRDS(.ele)
+})
+## check the order of the samples
+stopifnot(identical(sub(" .*$", "", names(gis)),
+                    sub(" .*$", "", names(loops))))
+## create heatmap signals
+heatmaps <- mapply(gis, interactions, FUN=function(.gi, .ele){
+  .loop <- read.delim(.ele, header = FALSE)
+  .loop <- with(.loop, GInteractions(
+    GRanges(V1, IRanges(V2+2501, V3-2500)),
+    GRanges(V4, IRanges(V5+2501, V6-2500)),
+    score = log2(V8)
+  ))
+  ## highlight the called interactions by add color the border
+  .gi$border_color <- NA
+  ol <- findOverlaps(.gi, .loop)
+  .gi$border_color[queryHits(ol)] <- "black"
+  ## create 'track' object from GInteraction object
+  gi2track(.gi)
+})
+## create gene track object
+trs <- geneTrack(id, txdb, symbol, asList = FALSE)
+seqlevelsStyle(trs$dat) <- "UCSC" ## make sure the seqnames are in same style
+```
+
+## Plot the subfigure __a__ by viewTracks
+```{r viewTracks,fig.width=7,fig.height=10}
+## create the plot style by default algorithm
+op <- optimizeStyle(
+  trackList = trackList(trs, 
+                        rev(bwsigs),   ## reverse the signal
+                        rev(loops),    ## to keep 0 dpa samples
+                        rev(heatmaps), ## in top
+                        ## set the height for each track
+                        heightDist = c(2, length(bwsigs),
+                                       length(loops),
+                                       length(heatmaps)*8)))
+tL <- op$tracks
+sty <- op$style
+for(i in which(grepl('ATAC-seq', names(tL)))){#R2 ATAC-seq signal
+  ## set the ylim. The raw range is [0,1]
+  setTrackStyleParam(tL[[i]], "ylim", c(0.15, .8))
+  ## set the y-axis to the right side
+  setTrackYaxisParam(tL[[i]], "main", FALSE)
+  ## plot the y-axis lables
+  setTrackYaxisParam(tL[[i]], "label", TRUE)
+  ## draw the y-axis
+  setTrackYaxisParam(tL[[i]], "draw", TRUE)
+}
+## set color keys for the link tracks
+for(i in which(grepl('interactions', names(tL)))){
+  setTrackStyleParam(tL[[i]], "breaks",
+                     ## set the breaks from min to max
+                     c(seq(from=2, to=6.5, by=.5), 10))
+  setTrackStyleParam(tL[[i]], "color",
+                     c("lightblue", "yellow", "red"))
+  setTrackYaxisParam(tL[[i]], "draw", TRUE)
+}
+## set color keys for the heatmaps
+for(i in which(grepl('heatmap', names(tL)))){
+  setTrackStyleParam(tL[[i]], "breaks", 
+                     c(seq(from=0, to=5, by=.5), 8.5))
+  setTrackStyleParam(tL[[i]], "color",
+                     c("#FDF8F5", "#EA7556", "#4D0E0B"))
+}
+##
+trackViewer::viewTracks(tL, viewerStyle = sty,
+                        gr=fig1PlotRange, autoOptimizeStyle = FALSE)
+
+## set the TADs to plot with the heatmap
+tad <- GRanges("chr5",
+               IRanges(c(21060000, 21220000, 21326000, 21890000, 22000000),
+                       c(21130000, 21290000, 21860000, 21960000, 22090000)))
+## add the annotations to the heatmap
+for(i in which(grepl('heatmap', names(tL)))){
+  ## add TADs as dashed line (lty=2)
+  trackViewer::addInteractionAnnotation(tad, i, grid.lines,
+                                        gp=gpar(col="black",
+                                                lwd=1, lty=2))
+  ## add the guide line for the silencer with slope -1 with lwd=3
+  trackViewer::addInteractionAnnotation(-21795000, i,
+                                        gp=gpar(col = "#009E73",
+                                                lwd=3, lty=3))
+}
+```
+
+## SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```

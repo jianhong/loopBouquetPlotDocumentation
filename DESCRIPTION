@@ -1,0 +1,20 @@
+Package: loopBouquetPlotDocumentation
+Type: Package
+Title: The documentation for loopBouquetPlot function
+Version: 0.0.1
+Authors@R: c(person(given="Jianhong", family="Ou", email="jianhong.ou@duke.edu", 
+                 role=c("aut", "cre"), comment=c(ORCID="0000-0002-8652-2488")))
+Description: The data and scripts to help users to generate plots.
+BugReports: https://github.com/jianhong/loopBouquetPlotDocumentation/issues
+URL: https://jianhong.github.io/loopBouquetPlotDocumentation
+Depends: R (>= 4.1.0)
+Imports: trackViewer, InteractionSet, GenomicFeatures, GenomicRanges, RMariaDB,
+         org.Dr.eg.db, ChIPpeakAnno, GenomeInfoDb, grid,
+         TxDb.Hsapiens.UCSC.hg38.knownGene, TxDb.Mmusculus.UCSC.mm10.knownGene,
+         org.Hs.eg.db, org.Mm.eg.db
+Suggests: knitr, rmarkdown, pkgdown, boodown, pander
+License: MIT + file LICENSE
+Encoding: UTF-8
+VignetteBuilder: knitr
+RoxygenNote: 7.2.3
+DockerImage: ghcr.io/jianhong/loopBouquetPlotDocumentation

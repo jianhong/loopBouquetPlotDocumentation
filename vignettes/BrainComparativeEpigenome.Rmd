@@ -1,0 +1,150 @@
+---
+title: "`loopBouquetPlot` for Brain Comparative Epigenome"
+author: "Jianhong Ou"
+vignette: >
+  %\VignetteIndexEntry{`loopBouquetPlot` for Brain Comparative Epigenome}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output:
+  html_document:
+  theme: simplex
+  toc: true
+  toc_float: true
+  toc_depth: 4
+  fig_caption: true
+---
+
+```{r preload, echo=FALSE, results="hide", warning=FALSE}
+suppressPackageStartupMessages({
+  library(InteractionSet)
+  library(trackViewer)
+  library(ChIPpeakAnno)
+  library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+  library(TxDb.Mmusculus.UCSC.mm10.knownGene)
+  library(org.Hs.eg.db)
+  library(org.Mm.eg.db)
+})
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+# Introduction
+To illustrate how `loopBouquetPlot` can be used to help the comparison of different types of datasets, the brain comparative epigenome data will be plotted here.
+
+There are several steps to repeat the plots:
+
+1. Prepare the annotations
+
+2. Import interactions
+
+3. Import the ATAC-seq signals if available
+
+4. Plot the data by `loopBouquetPlot` function.
+
+The plot region are homolog regions of human and mouse shown in the Fig.1e of Zemke, N.R., Armand, E.J., Wang, W. et al. article.
+
+# Load libraries
+```{r loadPkg}
+library(InteractionSet)
+library(trackViewer)
+library(ChIPpeakAnno)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(TxDb.Mmusculus.UCSC.mm10.knownGene)
+library(org.Hs.eg.db)
+library(org.Mm.eg.db)
+```
+# Load data
+
+```{r region, warning=FALSE}
+## define the data range
+mm_range <- GRanges("chr12:35216062-39306229")
+hs_range <- GRanges('chr7:13552503-17745392')
+## define the data file path
+extdata <- system.file('extdata', 
+                       'BrainData',
+                       package='loopBouquetPlotDocumentation')
+## the interactions were subsets of data downloaded from Supplementary Tables of 
+## Zemke, N.R., Armand, E.J., Wang, W. et al. article
+## Conserved and divergent gene regulatory programs of the mammalian neocortex.
+## https://doi.org/10.1038/s41586-023-06819-6
+human_loops <- read.delim(file.path(extdata, 'Supplementary_Table_22.subset.tsv'))
+mouse_loops <- read.delim(file.path(extdata, 'Supplementary_Table_25.subset.tsv'))
+## create the GInteractions objects
+hs_gi <- InteractionSet::GInteractions(
+  GRanges(sub('-', ':', human_loops$hg38_coord_bin1)),
+  GRanges(sub('-', ':', human_loops$hg38_coord_bin2)),
+  celltype=human_loops$celltype)
+mm_gi <- InteractionSet::GInteractions(
+  GRanges(sub('-', ':', mouse_loops$bin1)),
+  GRanges(sub('-', ':', mouse_loops$bin2)),
+  celltype=mouse_loops$celltype)
+## prepare the annotations
+hs_feature <- genes(TxDb.Hsapiens.UCSC.hg38.knownGene)
+mm_feature <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
+## list the ATAC-seq signals
+hs_bws <- dir(file.path(extdata, 'human_m1_atac'),
+              '*.bw', full.names = TRUE)
+(names(hs_bws) <- sub('_ATAC_RPKM.bw', '', basename(hs_bws)))
+mm_bws <- dir(file.path(extdata, 'mouse_mop_atac'),
+              '*.bw', full.names = TRUE)
+(names(mm_bws) <- sub('_ATAC_RPKM.bw', '', basename(mm_bws)))
+```
+
+# Plot the data
+```{r plot, width = 10, height=10}
+for(x in c('hs', 'mm')){
+  ## get the range
+  range <- get(paste0(x, "_range"))
+  ## get the GInteraction object and subset the data
+  gi <- subsetByOverlaps(get(paste0(x, "_gi")), range)
+  ## get the range of all interactions and prepare annotation for them
+  reg <- InteractionSet::regions(gi)
+  reg <- reg[seqnames(reg) %in% seqnames(range)[1]]
+  feature.gr <- subsetByOverlaps(get(paste0(x, "_feature")), range(reg))
+  ## extract The gene symbols
+  symbols <- ChIPpeakAnno::xget(
+    feature.gr$gene_id,
+    get(paste0('org.', toupper(substr(x, 1, 1)), substr(x, 2, 2), '.egSYMBOL')),
+    output='first')
+  keep <- !is.na(symbols)
+  feature.gr <- feature.gr[keep]
+  symbols <- symbols[keep]
+  feature.gr$label <- symbols
+  ## assign colors for the genes
+  feature.gr$col <- sample(2:7, length(feature.gr), replace=TRUE)
+  ## set the annotation type to 'gene'
+  feature.gr$type <- 'gene'
+  feature.gr$cex <- .5
+  ## make sure score is available
+  if(!'score' %in% colnames(mcols(gi))) gi$score <- 1
+  ## split the interactions by celltype
+  celltype <- strsplit(gi$celltype, ',')
+  celltype <- lapply(celltype, function(.ele) gsub(' ', '', .ele))
+  ## do loop for each celltype
+  ct <- unique(unlist(celltype))
+  ## get the bigwig file names
+  bwsFile <- get(paste0(x, "_bws"))
+  set.seed(123)
+  for(i in ct){
+    ## extract the interactions for the celltype
+    gi.s <- gi[vapply(celltype, function(.ele) i %in% .ele, logical(1L))]
+    bw <- NULL ## set default to NULL just in case there is not ATAC-seq data
+    if(i %in% names(bwsFile)){
+      bw <- importScore(bwsFile[i], ranges = range(reg), format = 'BigWig')
+    }
+    loopBouquetPlot(gi.s, range,
+                    feature.gr,
+                    coor_tick_unit = 5e4,
+                    coor_mark_interval = 5e5,
+                    lwd.gene = 2,
+                    method = 1,
+                    atacSig=bw)
+    grid::grid.text(label=paste(x, i), x=.15, y=.9)
+  }
+}
+```
+
+## SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```
