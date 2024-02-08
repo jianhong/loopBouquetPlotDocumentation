@@ -145,6 +145,7 @@ stopifnot(all(sub(' .*$', '', names(bwsigs))==
 ```{r loopBouquetPlot}
 set.seed(1) ## set seed to control the plot layout
 for(i in seq_along(loops_loopBouquet)){
+  ## pdf(paste0(names(loops_loopBouquet)[i], '.pdf')) # if using terminal
   trackViewer::loopBouquetPlot(loops_loopBouquet[[i]],
                                fig1PlotRange,
                                feature.gr,
@@ -160,6 +161,7 @@ for(i in seq_along(loops_loopBouquet)){
                                show_edges = FALSE)
   grid::grid.text(label=names(loops_loopBouquet)[i],
             x=.15, y=.9)
+  ## dev.off() # if using terminal
 }
 ```
 
@@ -280,6 +282,7 @@ for(i in which(grepl('heatmap', names(tL)))){
                      c("#FDF8F5", "#EA7556", "#4D0E0B"))
 }
 ##
+## pdf('Fig1a.pdf') # if using terminal
 trackViewer::viewTracks(tL, viewerStyle = sty,
                         gr=fig1PlotRange, autoOptimizeStyle = FALSE)
 
@@ -298,6 +301,7 @@ for(i in which(grepl('heatmap', names(tL)))){
                                         gp=gpar(col = "#009E73",
                                                 lwd=3, lty=3))
 }
+## dev.off() # if using terminal
 ```
 
 ## SessionInfo

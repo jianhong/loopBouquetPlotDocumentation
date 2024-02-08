@@ -47,11 +47,24 @@ If you are running M1/M2 chip, although RStudio server will not work,
 you still can try:
 
 ``` sh
+mkdir tmp4output
 docker run -it \
+  -v ${PWD}/tmp4output:/home/rstudio/output \
   --platform linux/x86_64 \
   ghcr.io/jianhong/loopbouquetplotdocumentation:latest \
-  R
+  bash
+cd output && R
 ```
+
+Once it is run, please output the figures to output folder like this:
+
+``` r
+pdf('plot.pdf')
+loopBouquetPlot(...)
+dev.off()
+```
+
+And you will see the plots in tmp4output folder on host machine.
 
 ### Documentation
 
@@ -61,6 +74,11 @@ enter:
 ``` r
 browseVignettes("loopBouquetPlotDocumentation")
 ```
+
+The source code for showcases are available at
+[Fig1](https://jianhong.github.io/loopBouquetPlotDocumentation/articles/Fig1.html)
+and
+[BrainComparativeEpigenome](https://jianhong.github.io/loopBouquetPlotDocumentation/articles/BrainComparativeEpigenome.html)
 
 ### Contributions and Support
 
