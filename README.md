@@ -1,7 +1,7 @@
 Function demo for trackViewer::loopBouquetPlot
 ================
 Authors: Jianhong Ou[^1]<br/>
-Last modified: 2024-02-07
+Last modified: 2024-02-08
 
 ## Overview
 
@@ -28,7 +28,10 @@ BiocManager::install("jianhong/loopBouquetPlotDocumentation")
 Or try with **this** repository docker image:
 
 ``` sh
-docker run -e PASSWORD=<choose_a_password_for_rstudio> -p 8787:8787 ghcr.io/jianhong/loopBouquetPlotDocumentation:latest
+docker run \
+  -e PASSWORD=<choose_a_password_for_rstudio> \
+  -p 8787:8787 \
+  ghcr.io/jianhong/loopbouquetplotdocumentation:latest
 ```
 
 Once running, navigate to <http://localhost:8787/> and then login with
@@ -39,6 +42,16 @@ exposes the password to others in a multi-user system (like a shared
 workstation or compute node). In practice, consider using an environment
 variable instead of plain text to pass along passwords and other secrets
 in docker command lines.
+
+If you are running M1/M2 chip, although RStudio server will not work,
+you still can try:
+
+``` sh
+docker run -it \
+  --platform linux/x86_64 \
+  ghcr.io/jianhong/loopbouquetplotdocumentation:latest \
+  R
+```
 
 ### Documentation
 
