@@ -114,17 +114,27 @@
 <p>Once running, navigate to <a href="http://localhost:8787/" class="external-link uri">http://localhost:8787/</a> and then login with <code>rstudio</code>:<code>yourchosenpassword</code>.</p>
 <p><em>NOTE</em>: Running docker that uses the password in plain text like above exposes the password to others in a multi-user system (like a shared workstation or compute node). In practice, consider using an environment variable instead of plain text to pass along passwords and other secrets in docker command lines.</p>
 <p>If you are running M1/M2 chip, although RStudio server will not work, you still can try:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-it</span> <span class="dt">\</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">--platform</span> linux/x86_64 <span class="dt">\</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  ghcr.io/jianhong/loopbouquetplotdocumentation:latest <span class="dt">\</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  R</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">mkdir</span> tmp4output</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-it</span> <span class="dt">\</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">-v</span> <span class="va">${PWD}</span>/tmp4output:/home/rstudio/output <span class="dt">\</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">--platform</span> linux/x86_64 <span class="dt">\</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  ghcr.io/jianhong/loopbouquetplotdocumentation:latest <span class="dt">\</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  bash</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="bu">cd</span> output <span class="kw">&amp;&amp;</span> <span class="ex">R</span></span></code></pre></div>
+<p>Once it is run, please output the figures to output folder like this:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">pdf</a></span><span class="op">(</span><span class="st">'plot.pdf'</span><span class="op">)</span></span>
+<span><span class="fu">loopBouquetPlot</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/grDevices/dev.html" class="external-link">dev.off</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>And you will see the plots in tmp4output folder on host machine.</p>
 </div>
 <div class="section level3">
 <h3 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h3>
 <p>To view documentation of loopBouquetPlotDocumentation, start R and enter:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/browseVignettes.html" class="external-link">browseVignettes</a></span><span class="op">(</span><span class="st">"loopBouquetPlotDocumentation"</span><span class="op">)</span></span></code></pre></div>
+<p>The source code for showcases are available at <a href="https://jianhong.github.io/loopBouquetPlotDocumentation/articles/Fig1.html">Fig1</a> and <a href="https://jianhong.github.io/loopBouquetPlotDocumentation/articles/BrainComparativeEpigenome.html">BrainComparativeEpigenome</a></p>
 </div>
 <div class="section level3">
 <h3 id="contributions-and-support">Contributions and Support<a class="anchor" aria-label="anchor" href="#contributions-and-support"></a>

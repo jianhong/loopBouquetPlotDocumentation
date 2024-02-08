@@ -181,8 +181,8 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span><span class="op">(</span><span class="va">interactions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">extdata</span>,</span>
 <span>                     <span class="st">"10k.2.sig3Dinteractions.bedpe"</span>,</span>
 <span>                     full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/tmp/RtmpxcgSVM/temp_libpathfa7672827bc/loopBouquetPlotDocumentation/extdata/0dpa.10k.2.sig3Dinteractions.bedpe"</span></span>
-<span><span class="co">## [2] "/tmp/RtmpxcgSVM/temp_libpathfa7672827bc/loopBouquetPlotDocumentation/extdata/4dpa.10k.2.sig3Dinteractions.bedpe"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/0dpa.10k.2.sig3Dinteractions.bedpe"</span></span>
+<span><span class="co">## [2] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/4dpa.10k.2.sig3Dinteractions.bedpe"</span></span></code></pre>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## import the loop for `loopBouquetPlot`</span></span>
 <span><span class="va">loops_loopBouquet</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">interactions</span>, <span class="kw">function</span><span class="op">(</span><span class="va">.ele</span><span class="op">)</span><span class="op">{</span></span>
@@ -211,8 +211,8 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span><span class="op">(</span><span class="va">bws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">extdata</span>,</span>
 <span>            <span class="st">"bigWig"</span>,</span>
 <span>            full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/tmp/RtmpxcgSVM/temp_libpathfa7672827bc/loopBouquetPlotDocumentation/extdata/0dpa.bigWig"</span></span>
-<span><span class="co">## [2] "/tmp/RtmpxcgSVM/temp_libpathfa7672827bc/loopBouquetPlotDocumentation/extdata/4dpa.bigWig"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/0dpa.bigWig"</span></span>
+<span><span class="co">## [2] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/4dpa.bigWig"</span></span></code></pre>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## import the ATAC-seq signales</span></span>
 <span><span class="co">## the ATAC-seq signals are HiCAR R2 read coverage</span></span>
@@ -232,6 +232,7 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="co">## set seed to control the plot layout</span></span>
 <span><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">loops_loopBouquet</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
+<span>  <span class="co">## pdf(paste0(names(loops_loopBouquet)[i], '.pdf')) # if using terminal</span></span>
 <span>  <span class="fu">trackViewer</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/trackViewer/man/loopBouquetPlot.html" class="external-link">loopBouquetPlot</a></span><span class="op">(</span><span class="va">loops_loopBouquet</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>                               <span class="va">fig1PlotRange</span>,</span>
 <span>                               <span class="va">feature.gr</span>,</span>
@@ -247,6 +248,7 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span>                               show_edges <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span>  <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/grid.text.html" class="external-link">grid.text</a></span><span class="op">(</span>label<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">loops_loopBouquet</span><span class="op">)</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>,</span>
 <span>            x<span class="op">=</span><span class="fl">.15</span>, y<span class="op">=</span><span class="fl">.9</span><span class="op">)</span></span>
+<span>  <span class="co">## dev.off() # if using terminal</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p><img src="Fig1_files/figure-html/loopBouquetPlot-1.png" width="700"><img src="Fig1_files/figure-html/loopBouquetPlot-2.png" width="700"></p>
 </div>
@@ -284,8 +286,8 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span><span class="op">(</span><span class="va">hics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">extdata</span>,</span>
 <span>             <span class="st">"10000.ginteractions.rds"</span>,</span>
 <span>             full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/tmp/RtmpxcgSVM/temp_libpathfa7672827bc/loopBouquetPlotDocumentation/extdata/MAPS_signals_0dpa.10000.ginteractions.rds"</span></span>
-<span><span class="co">## [2] "/tmp/RtmpxcgSVM/temp_libpathfa7672827bc/loopBouquetPlotDocumentation/extdata/MAPS_signals_4dpa.10000.ginteractions.rds"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/MAPS_signals_0dpa.10000.ginteractions.rds"</span></span>
+<span><span class="co">## [2] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/MAPS_signals_4dpa.10000.ginteractions.rds"</span></span></code></pre>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## set the sample names</span></span>
 <span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">hics</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"MAPS_signals_(.*?).10000.ginteractions.rds"</span>, <span class="st">"\\1 heatmap"</span>,</span>
@@ -373,6 +375,7 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span>                     <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#FDF8F5"</span>, <span class="st">"#EA7556"</span>, <span class="st">"#4D0E0B"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span><span class="co">##</span></span>
+<span><span class="co">## pdf('Fig1a.pdf') # if using terminal</span></span>
 <span><span class="fu">trackViewer</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/trackViewer/man/viewTracks.html" class="external-link">viewTracks</a></span><span class="op">(</span><span class="va">tL</span>, viewerStyle <span class="op">=</span> <span class="va">sty</span>,</span>
 <span>                        gr<span class="op">=</span><span class="va">fig1PlotRange</span>, autoOptimizeStyle <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
@@ -392,11 +395,13 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span>                                                lwd<span class="op">=</span><span class="fl">3</span>, lty<span class="op">=</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p><img src="Fig1_files/figure-html/viewTracks-1.png" width="672"></p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## dev.off() # if using terminal</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="sessioninfo">SessionInfo<a class="anchor" aria-label="anchor" href="#sessioninfo"></a>
 </h3>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## R Under development (unstable) (2024-01-31 r85845)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
