@@ -1,4 +1,4 @@
-Function demo for loopBouquetPlotDocumentation
+Function demo for trackViewer::loopBouquetPlot
 ================
 Authors: Jianhong Ou[^1]<br/>
 Last modified: 2024-02-07
@@ -12,7 +12,7 @@ dataset such as HiC, HiChIP, PLAC-seq, ChIA-PET, and HiCAR data.
 ### Pre-requisites
 
 - Basic knowledge of R syntax
-- Basic knowledge of Docker
+- Basic knowledge of Docker if use Docker
 - Basic knowledge of shell commands
 - A computer with internet connection
 
@@ -24,6 +24,21 @@ To install this package, start R and enter:
 library(BiocManager)
 BiocManager::install("jianhong/loopBouquetPlotDocumentation")
 ```
+
+Or try with **this** repository docker image:
+
+``` sh
+docker run -e PASSWORD=<choose_a_password_for_rstudio> -p 8787:8787 ghcr.io/jianhong/loopBouquetPlotDocumentation:latest
+```
+
+Once running, navigate to <http://localhost:8787/> and then login with
+`rstudio`:`yourchosenpassword`.
+
+*NOTE*: Running docker that uses the password in plain text like above
+exposes the password to others in a multi-user system (like a shared
+workstation or compute node). In practice, consider using an environment
+variable instead of plain text to pass along passwords and other secrets
+in docker command lines.
 
 ### Documentation
 
