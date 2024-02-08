@@ -12,7 +12,7 @@ Imports: trackViewer, InteractionSet, GenomicFeatures, GenomicRanges, RMariaDB,
          org.Dr.eg.db, ChIPpeakAnno, GenomeInfoDb, grid,
          TxDb.Hsapiens.UCSC.hg38.knownGene, TxDb.Mmusculus.UCSC.mm10.knownGene,
          org.Hs.eg.db, org.Mm.eg.db
-Suggests: knitr, rmarkdown, pkgdown, boodown, pander
+Suggests: knitr, rmarkdown, pkgdown, bookdown, pander
 License: MIT + file LICENSE
 Encoding: UTF-8
 VignetteBuilder: knitr
