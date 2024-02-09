@@ -56,8 +56,8 @@ library(org.Mm.eg.db)
 
 ```{r region, warning=FALSE}
 ## define the data range
-mm_range <- GRanges("chr12:35216062-39306229")
 hs_range <- GRanges('chr7:13552503-17745392')
+mm_range <- GRanges("chr12:35216062-39306229")
 ## define the data file path
 extdata <- system.file('extdata', 
                        'BrainData',
@@ -72,38 +72,33 @@ mouse_loops <- read.delim(file.path(extdata, 'Supplementary_Table_25.subset.tsv'
 hs_gi <- InteractionSet::GInteractions(
   GRanges(sub('-', ':', human_loops$hg38_coord_bin1)),
   GRanges(sub('-', ':', human_loops$hg38_coord_bin2)),
-  celltype=human_loops$celltype)
+  celltype=human_loops$celltype,
+  score = 1) ## score value is missing
 mm_gi <- InteractionSet::GInteractions(
   GRanges(sub('-', ':', mouse_loops$bin1)),
   GRanges(sub('-', ':', mouse_loops$bin2)),
-  celltype=mouse_loops$celltype)
+  celltype=mouse_loops$celltype,
+  score = 1)
+hs_gi_sub <- subsetByOverlaps(hs_gi, hs_range)
+mm_gi_sub <- subsetByOverlaps(mm_gi, mm_range)
+## extract the celltype information from the supplementary data
+getCellTypes <- function(gi){
+  ## the celltypes are separated by ','
+  celltype <- strsplit(gi$celltype, ',')
+  celltype <- lapply(celltype, function(.ele) gsub(' ', '', .ele))
+  celltype
+}
+hs_gi_celltype <- getCellTypes(hs_gi_sub)
+mm_gi_celltype <- getCellTypes(mm_gi_sub)
 ## prepare the annotations
-hs_feature <- genes(TxDb.Hsapiens.UCSC.hg38.knownGene)
-mm_feature <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
-## list the ATAC-seq signals
-hs_bws <- dir(file.path(extdata, 'human_m1_atac'),
-              '*.bw', full.names = TRUE)
-(names(hs_bws) <- sub('_ATAC_RPKM.bw', '', basename(hs_bws)))
-mm_bws <- dir(file.path(extdata, 'mouse_mop_atac'),
-              '*.bw', full.names = TRUE)
-(names(mm_bws) <- sub('_ATAC_RPKM.bw', '', basename(mm_bws)))
-```
-
-# Plot the data
-```{r plot, width = 10, height=10}
-for(x in c('hs', 'mm')){
-  ## get the range
-  range <- get(paste0(x, "_range"))
-  ## get the GInteraction object and subset the data
-  gi <- subsetByOverlaps(get(paste0(x, "_gi")), range)
-  ## get the range of all interactions and prepare annotation for them
+prepareFeatures <- function(gi, range, species){
   reg <- InteractionSet::regions(gi)
   reg <- reg[seqnames(reg) %in% seqnames(range)[1]]
-  feature.gr <- subsetByOverlaps(get(paste0(x, "_feature")), range(reg))
+  feature.gr <- subsetByOverlaps(get(paste0(species, "_feature")), range(reg))
   ## extract The gene symbols
   symbols <- ChIPpeakAnno::xget(
     feature.gr$gene_id,
-    get(paste0('org.', toupper(substr(x, 1, 1)), substr(x, 2, 2), '.egSYMBOL')),
+    get(paste0('org.', toupper(substr(species, 1, 1)), substr(species, 2, 2), '.egSYMBOL')),
     output='first')
   keep <- !is.na(symbols)
   feature.gr <- feature.gr[keep]
@@ -113,23 +108,81 @@ for(x in c('hs', 'mm')){
   feature.gr$col <- sample(2:7, length(feature.gr), replace=TRUE)
   ## set the annotation type to 'gene'
   feature.gr$type <- 'gene'
+  feature.gr
+}
+hs_feature <- genes(TxDb.Hsapiens.UCSC.hg38.knownGene)
+mm_feature <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
+hs_feature.gr <- prepareFeatures(hs_gi, hs_range, species='hs')
+mm_feature.gr <- prepareFeatures(mm_gi, mm_range, species='mm')
+
+## list the ATAC-seq signals
+hs_bws <- dir(file.path(extdata, 'human_m1_atac'),
+              '*.bw', full.names = TRUE)
+(names(hs_bws) <- sub('_ATAC_RPKM.bw', '', basename(hs_bws)))
+mm_bws <- dir(file.path(extdata, 'mouse_mop_atac'),
+              '*.bw', full.names = TRUE)
+(names(mm_bws) <- sub('_ATAC_RPKM.bw', '', basename(mm_bws)))
+```
+# Plot data for astrocytes (ASCs) and microglial cells (MGCs)
+
+```{r ASCvsMGC, fig.show="hold", out.width="50%"}
+set.seed(123)
+op <- par(mfrow=c(2, 2))
+for(species in c('hs', 'mm')){ ## loop for species
+  for(cell in c('ASC', 'MGC')){ ## loop for cell type
+    gi <- get(paste0(species, '_gi_sub')) ## get the interaction data
+    ## filter the interaction by the cell type
+    gi.s <- gi[vapply(get(paste0(species, '_gi_celltype')),
+                      function(.ele) cell %in% .ele, logical(1L))]
+    ## import the ATAC-seq coverage
+    reg <- InteractionSet::regions(gi.s)
+    bw <- importScore(get(paste0(species, '_bws'))[cell],
+                      ranges = range(reg), format = 'BigWig')
+    ## plot data
+    loopBouquetPlot(gi = gi.s,
+                    range = get(paste0(species, '_range')),
+                    feature.gr = get(paste0(species, '_feature.gr')),
+                    coor_tick_unit = 5e4,
+                    coor_mark_interval = 5e5,
+                    lwd.gene = 2,
+                    method = 1,
+                    atacSig=bw,
+                    safe_text_force = 9)
+    ## mark the sub-figure
+    grid::grid.text(label=paste(species, cell), x=.15, y=.9)
+  }
+}
+par(op)
+```
+
+# Plot all data
+```{r plot, width = 10, height=10}
+for(species in c('hs', 'mm')){
+  ## get the range
+  range <- get(paste0(species, "_range"))
+  ## get the GInteraction object and subset the data
+  gi <- get(paste0(species, '_gi_sub'))
+  ## get the range of all interactions and prepare annotation for them
+  reg <- InteractionSet::regions(gi)
+  reg <- reg[seqnames(reg) %in% seqnames(range)[1]]
+  feature.gr <- get(paste0(species, '_feature.gr'))
+  ## change the text size
   feature.gr$cex <- .5
   ## make sure score is available
   if(!'score' %in% colnames(mcols(gi))) gi$score <- 1
   ## split the interactions by celltype
-  celltype <- strsplit(gi$celltype, ',')
-  celltype <- lapply(celltype, function(.ele) gsub(' ', '', .ele))
+  celltype <- get(paste0(species, '_gi_celltype'))
   ## do loop for each celltype
   ct <- unique(unlist(celltype))
   ## get the bigwig file names
-  bwsFile <- get(paste0(x, "_bws"))
+  bwsFile <- get(paste0(species, "_bws"))
   set.seed(123)
-  for(i in ct){
+  for(cell in ct){
     ## extract the interactions for the celltype
-    gi.s <- gi[vapply(celltype, function(.ele) i %in% .ele, logical(1L))]
+    gi.s <- gi[vapply(celltype, function(.ele) cell %in% .ele, logical(1L))]
     bw <- NULL ## set default to NULL just in case there is not ATAC-seq data
-    if(i %in% names(bwsFile)){
-      bw <- importScore(bwsFile[i], ranges = range(reg), format = 'BigWig')
+    if(cell %in% names(bwsFile)){
+      bw <- importScore(bwsFile[cell], ranges = range(reg), format = 'BigWig')
     }
     loopBouquetPlot(gi.s, range,
                     feature.gr,
@@ -137,8 +190,9 @@ for(x in c('hs', 'mm')){
                     coor_mark_interval = 5e5,
                     lwd.gene = 2,
                     method = 1,
-                    atacSig=bw)
-    grid::grid.text(label=paste(x, i), x=.15, y=.9)
+                    atacSig=bw,
+                    safe_text_force = 9)
+    grid::grid.text(label=paste(species, cell), x=.15, y=.9)
   }
 }
 ```

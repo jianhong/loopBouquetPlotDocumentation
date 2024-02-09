@@ -1,7 +1,7 @@
 Function demo for trackViewer::loopBouquetPlot
 ================
 Authors: Jianhong Ou[^1]<br/>
-Last modified: 2024-02-08
+Last modified: 2024-02-09
 
 ## Overview
 
@@ -64,7 +64,10 @@ loopBouquetPlot(...)
 dev.off()
 ```
 
-And you will see the plots in tmp4output folder on host machine.
+And you will see the plots in tmp4output folder on host machine like
+this.
+
+![](inst/extdata/banner.svg)
 
 ### Documentation
 
