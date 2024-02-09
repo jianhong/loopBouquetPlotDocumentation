@@ -181,8 +181,8 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span><span class="op">(</span><span class="va">interactions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">extdata</span>,</span>
 <span>                     <span class="st">"10k.2.sig3Dinteractions.bedpe"</span>,</span>
 <span>                     full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/0dpa.10k.2.sig3Dinteractions.bedpe"</span></span>
-<span><span class="co">## [2] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/4dpa.10k.2.sig3Dinteractions.bedpe"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "/tmp/RtmpnMZ1wf/temp_libpath3da3fbf27f8/loopBouquetPlotDocumentation/extdata/0dpa.10k.2.sig3Dinteractions.bedpe"</span></span>
+<span><span class="co">## [2] "/tmp/RtmpnMZ1wf/temp_libpath3da3fbf27f8/loopBouquetPlotDocumentation/extdata/4dpa.10k.2.sig3Dinteractions.bedpe"</span></span></code></pre>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## import the loop for `loopBouquetPlot`</span></span>
 <span><span class="va">loops_loopBouquet</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">interactions</span>, <span class="kw">function</span><span class="op">(</span><span class="va">.ele</span><span class="op">)</span><span class="op">{</span></span>
@@ -211,8 +211,8 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span><span class="op">(</span><span class="va">bws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">extdata</span>,</span>
 <span>            <span class="st">"bigWig"</span>,</span>
 <span>            full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/0dpa.bigWig"</span></span>
-<span><span class="co">## [2] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/4dpa.bigWig"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "/tmp/RtmpnMZ1wf/temp_libpath3da3fbf27f8/loopBouquetPlotDocumentation/extdata/0dpa.bigWig"</span></span>
+<span><span class="co">## [2] "/tmp/RtmpnMZ1wf/temp_libpath3da3fbf27f8/loopBouquetPlotDocumentation/extdata/4dpa.bigWig"</span></span></code></pre>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## import the ATAC-seq signales</span></span>
 <span><span class="co">## the ATAC-seq signals are HiCAR R2 read coverage</span></span>
@@ -286,8 +286,8 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span><span class="op">(</span><span class="va">hics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">extdata</span>,</span>
 <span>             <span class="st">"10000.ginteractions.rds"</span>,</span>
 <span>             full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/MAPS_signals_0dpa.10000.ginteractions.rds"</span></span>
-<span><span class="co">## [2] "/tmp/Rtmp7OkOpu/temp_libpath292732d1b8/loopBouquetPlotDocumentation/extdata/MAPS_signals_4dpa.10000.ginteractions.rds"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "/tmp/RtmpnMZ1wf/temp_libpath3da3fbf27f8/loopBouquetPlotDocumentation/extdata/MAPS_signals_0dpa.10000.ginteractions.rds"</span></span>
+<span><span class="co">## [2] "/tmp/RtmpnMZ1wf/temp_libpath3da3fbf27f8/loopBouquetPlotDocumentation/extdata/MAPS_signals_4dpa.10000.ginteractions.rds"</span></span></code></pre>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## set the sample names</span></span>
 <span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">hics</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"MAPS_signals_(.*?).10000.ginteractions.rds"</span>, <span class="st">"\\1 heatmap"</span>,</span>
@@ -432,7 +432,7 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span><span class="co">##  [5] AnnotationDbi_1.65.2        InteractionSet_1.31.0      </span></span>
 <span><span class="co">##  [7] SummarizedExperiment_1.33.3 Biobase_2.63.0             </span></span>
 <span><span class="co">##  [9] MatrixGenerics_1.15.0       matrixStats_1.2.0          </span></span>
-<span><span class="co">## [11] trackViewer_1.39.10         GenomicRanges_1.55.2       </span></span>
+<span><span class="co">## [11] trackViewer_1.39.11         GenomicRanges_1.55.2       </span></span>
 <span><span class="co">## [13] GenomeInfoDb_1.39.5         IRanges_2.37.1             </span></span>
 <span><span class="co">## [15] S4Vectors_0.41.3            BiocGenerics_0.49.1        </span></span>
 <span><span class="co">## </span></span>
