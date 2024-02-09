@@ -67,7 +67,7 @@ dev.off()
 And you will see the plots in tmp4output folder on host machine like
 this.
 
-![](inst/extdata/banner.svg)
+![](https://raw.githubusercontent.com/jianhong/loopBouquetPlotDocumentation/main/inst/extdata/banner.svg)
 
 ### Documentation
 
