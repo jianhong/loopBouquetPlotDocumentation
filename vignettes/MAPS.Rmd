@@ -1,0 +1,240 @@
+---
+title: "`loopBouquetPlot` example for loops caller comparison"
+author: "Jianhong Ou"
+bibliography: bibliography.bib
+csl: nature.csl
+vignette: >
+  %\VignetteIndexEntry{`loopBouquetPlot` example for loops caller comparison}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output:
+  html_document:
+  theme: simplex
+  toc: true
+  toc_float: true
+  toc_depth: 4
+  fig_caption: true
+---
+
+```{r setup, include=FALSE}
+library(InteractionSet)
+library(trackViewer)
+library(ChIPpeakAnno)
+library(TxDb.Mmusculus.UCSC.mm10.knownGene)
+library(org.Mm.eg.db)
+library(rtracklayer)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+To demonstrate the utility of `loopBouquetPlot` in comparing different loop callers for the same dataset, we will visualize the loops called by `MAPS`[@juric2019maps] and `hichipper`[@lareau2018hichipper] side by side.
+
+```{r loadlibrary}
+library(InteractionSet)
+library(trackViewer)
+library(ChIPpeakAnno)
+library(TxDb.Mmusculus.UCSC.mm10.knownGene)
+library(org.Mm.eg.db)
+library(rtracklayer)
+```
+
+## DATA from MAPS paper
+
+Download data from MAPS paper.
+```{r, warning=FALSE, eval=FALSE}
+url <- 'https://doi.org/10.1371/journal.pcbi.1006982.s027'
+tmpf <- tempfile()
+download.file(url=url, destfile = tmpf)
+tmpdir <- tempdir()
+unzip(tmpf, exdir = tmpdir)
+d <- file.path(tmpdir, 'Supplementary data')
+MAPS_files <- dir(d, 'MAPS')
+(names(MAPS_files) <- sub('_combine_MAPS_call', '',
+                          sub('.bedpe', '', MAPS_files)))
+hichipper_files <- dir(d, 'hichipper')
+(names(hichipper_files) <- sub('_combine_hichipper_converted.bedpe', 
+                               '', hichipper_files))
+maps_loops <- lapply(MAPS_files, function(.ele){
+  .ele <- read.delim(file.path(d, .ele))
+  with(.ele, GInteractions(GRanges(chr1, IRanges(start1+1, end1)),
+                           GRanges(chr2, IRanges(start2+1, end2)),
+                           score = -log10(fdr)))
+})
+hichipper_loops <- lapply(hichipper_files, function(.ele){
+  .ele <- read.delim(file.path(d, .ele))
+  with(.ele, GInteractions(GRanges(chr1, IRanges(start1+1, end1)),
+                           GRanges(chr2, IRanges(start2+1, end2)),
+                           score = -log10(fdr)))
+})
+
+mm_gi <- list(
+  maps_CTCF         = maps_loops[["mESC_CTCF"]],
+  hichipper_CTCF    = hichipper_loops[["mESC_CTCF"]],
+  maps_H3K4me3      = maps_loops[["mESC_H3K4me3"]],
+  hichipper_H3K4me3 = hichipper_loops[["mESC_H3K4me3"]]
+)
+```
+
+We have already downloaded the data and saved a subset of it within this package. Now, we will load the data from this package to save time.
+```{r}
+## set the data folder, all data are available in the extdata folder of this package
+extdata <- system.file('extdata',
+                       'GSE119663',
+                       package='loopBouquetPlotDocumentation')
+## list all interaction BEDPE files
+interactions <- dir(extdata,
+                     "bedpe",
+                     full.names = TRUE)
+names(interactions) <- sub('.bedpe.gz',
+                           '',
+                           basename(interactions))
+mm_gi <- lapply(interactions, import)
+mm_gi <- lapply(mm_gi, function(.ele){
+  GInteractions(first(.ele), second(.ele), score=mcols(.ele)$score)
+})
+## hic files were downloaded from processed data of GSE119663
+mm_hic <- dir(extdata, 'PLACseq.rds', full.names = TRUE)
+(names(mm_hic) <- sub("_PLACseq.rds", " heatmap", basename(mm_hic)))
+```
+
+Here is the helper function to prepare the annotation data.
+```{r helperFun}
+prepareFeatures <- function(gi, range, species){
+  reg <- lapply(gi, InteractionSet::regions)
+  reg <- unlist(GRangesList(reg))
+  reg <- reg[seqnames(reg) %in% seqnames(range)[1]]
+  feature.gr <- subsetByOverlaps(get(paste0(species, "_feature")), range(reg))
+  ## extract The gene symbols
+  symbols <- ChIPpeakAnno::xget(
+    feature.gr$gene_id,
+    org.Mm.egSYMBOL,
+    output='first')
+  feature.gr$symbols <- symbols
+  geneType <- ChIPpeakAnno::xget(
+    feature.gr$gene_id,
+    org.Mm.egGENETYPE,
+    output='all'
+  )
+  keep <- !is.na(symbols) & symbols!='NA' & grepl('protein-coding', geneType)
+  feature.gr$label <- NA
+  feature.gr$label[keep] <- symbols[keep]
+  ## assign colors for the genes
+  feature.gr$col[keep] <- sample(2:7, length(feature.gr[keep]), replace=TRUE)
+  ## set the annotation type to 'gene'
+  feature.gr$type <- 'gene'
+  feature.gr
+}
+```
+
+## Plot data by `loopBouquetPlot` for a given region
+
+```{r plot, fig.show="hold", out.width="50%", width=14, height=14}
+mm_range <- GRanges('chr10', IRanges(60600001, 61660000))
+mm_feature <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
+mm_feature.gr <- prepareFeatures(mm_gi, mm_range, species='mm')
+
+op <- par(mfrow=c(2, 2))
+for(caller in c('maps', 'hichipper')){ ## loop for caller
+  for(antibody in c('CTCF', 'H3K4me3')){ ## loop for antibody type
+    gi.s <- subsetByOverlaps(mm_gi[[paste0(caller, '_', antibody)]], mm_range) ## get the interaction data
+    if(length(gi.s)>1){
+      ## plot data
+      set.seed(123)
+      loopBouquetPlot(gi = gi.s,
+                      range = mm_range,
+                      feature.gr = mm_feature.gr,
+                      coor_tick_unit = 5e4,
+                      coor_mark_interval = 5e5,
+                      lwd.gene = 2,
+                      method = 1)
+      ## mark the sub-figure
+      grid::grid.text(label=paste(caller, antibody), x=.15, y=.9)
+    }
+  }
+}
+par(op)
+```
+
+```{r, heatmap, height=14}
+gis <- lapply(mm_hic, function(.ele){
+  ## data were prepared by importGInteractions with KR normalization
+  ## score are log2 transformed observed data
+    # .ele <- importGInteractions(.ele, ranges = range.ext,
+    #                     format = "hic",
+    #                     resolution = 10000,
+    #                     out = "track",
+    #                     normalization = "KR",
+    #                     matrixType = "observed")
+    # .ele$dat$score <- log2(.ele$dat$score)
+    readRDS(.ele)
+  })
+id <- mm_feature.gr$gene_id
+symbol <- mm_feature.gr$symbols
+trs <- geneTrack(id, TxDb.Mmusculus.UCSC.mm10.knownGene,
+                 symbol, asList = FALSE)
+trs$dat$color[!is.na(trs$dat$id)] <-
+  mm_feature.gr[trs$dat$id[!is.na(trs$dat$id)]]$col
+## loops
+loops <- lapply(mm_gi, gi2track)
+loops <- lapply(loops, function(.ele){
+  .ele$dat$score <- log2(.ele$dat$score)
+  setTrackStyleParam(.ele, "tracktype", "link")
+  .ele
+})
+names(loops) <- paste(names(loops), 'interactions')
+op <- optimizeStyle(
+  trackList = trackList(trs, 
+                        rev(loops),
+                        gis,
+                        ## set the height for each track
+                        heightDist = c(2,
+                                       length(loops),
+                                       length(gis)*8)))
+tL <- op$tracks
+sty <- op$style
+## set color keys for the link tracks
+for(i in which(grepl('interactions', names(tL)))){
+  setTrackStyleParam(tL[[i]], "breaks",
+                     ## set the breaks from min to max
+                     c(seq(from=2, to=6.5, by=.5), 10))
+  setTrackStyleParam(tL[[i]], "color",
+                     c("lightblue", "yellow", "red"))
+  setTrackYaxisParam(tL[[i]], "draw", TRUE)
+  setTrackStyleParam(tL[[i]], 'ylabpos', 'bottomleft')
+}
+## set color keys for the heatmaps
+for(i in which(grepl('heatmap', names(tL)))){
+  setTrackStyleParam(tL[[i]], "breaks", 
+                     c(seq(from=0, to=6.5, by=.5), 10))
+  setTrackStyleParam(tL[[i]], "color",
+                     c("#FDF8F5", "#EA7556", "#4D0E0B"))
+}
+vp <- trackViewer::viewTracks(tL, viewerStyle = sty,
+                        gr=mm_range, autoOptimizeStyle = FALSE)
+addGuideLine(c(60750000, 61070000, 61162000, 61460000), col='red', vp=vp)
+tads <- GRanges('chr10', IRanges(c(60260001, 60750001, 61070001, 61460001),
+                                   c(60750000, 61070000, 61460000, 61735000)))
+for(i in which(grepl('heatmap', names(tL)))){
+  addInteractionAnnotation(tads, names(tL)[i],
+                         grid.lines, gp=gpar(col="#0072B2", lwd=3, lty=3))
+}
+## highlight the differential interaction region among the H3K4me3 and CTCF PLAC-Seq
+gi_sub <- GInteractions(
+  GRanges('chr10', IRanges(c(60260001, 60750001, 61070001),
+                           c(60750000, 61070000, 61460000))),
+  GRanges('chr10', IRanges(c(60750001, 61070001, 61460001),
+                           c(61070000, 61210000, 61735000)))
+)
+## make sure not olverlap with TAD curve
+start(regions(gi_sub)) <- start(regions(gi_sub))+5000
+end(regions(gi_sub)) <- end(regions(gi_sub))-5000
+addInteractionAnnotation(gi_sub, "H3K4me3 heatmap",
+                         grid.polygon,
+                         gp=gpar(col="#009E73", lwd=2, lty=2, fill=NA))
+```
+
+# sessionInfo
+```{r}
+sessionInfo()
+```
+

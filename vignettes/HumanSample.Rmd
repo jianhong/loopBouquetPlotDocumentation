@@ -1,0 +1,200 @@
+---
+title: "`loopBouquetPlot` example for Human HiC and ChIA-PET data"
+author: "Jianhong Ou"
+bibliography: bibliography.bib
+csl: nature.csl
+vignette: >
+  %\VignetteIndexEntry{`loopBouquetPlot` example for Human HiC and ChIA-PET data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output:
+  html_document:
+  theme: simplex
+  toc: true
+  toc_float: true
+  toc_depth: 4
+  fig_caption: true
+---
+
+```{r preload, echo=FALSE, results="hide", warning=FALSE}
+suppressPackageStartupMessages({
+  library(InteractionSet)
+  library(trackViewer)
+  library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+  library(org.Hs.eg.db)
+  library(rtracklayer)
+})
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+# Introduction
+To illustrate how `loopBouquetPlot` can be used to help the comparison of different types of datasets, the humnan cellline data[@rao20143d,@li2012extensive] will be plotted here.
+
+There are several steps to repeat the plots:
+
+1. Prepare the annotations
+
+2. Import interactions
+
+3. Import the ATAC-seq signals if available
+
+4. Plot the data by `loopBouquetPlot` function.
+
+# Load libraries
+
+```{r pkgload}
+library(trackViewer)
+library(InteractionSet)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(org.Hs.eg.db)
+library(ChIPpeakAnno)
+```
+# Case 1. plot called loops around _ADAMTS5_ gene from HiC-seq data
+
+Chromatin loops for human cell lines were identified at kilobase resolution using in situ Hi-C sequencing[@rao20143d]. In this use case, we will showcase the capabilities of `loopBouquetPlot` for bin-based loops.
+
+## Import interactions
+```{r loadloops}
+## define the data file path
+extdata <- system.file('extdata', 
+                       'GSE63525',
+                       package='loopBouquetPlotDocumentation')
+readData <- function(HiCCUPS_looplist_file){
+  loops <- read.delim(
+    file.path(extdata,
+              HiCCUPS_looplist_file))
+  ## Use observed value/ expected value (donut)
+  loops <- with(loops, GInteractions(GRanges(chr1, IRanges(x1+1, x2)),
+                                     GRanges(chr2, IRanges(y1+1, y2)),
+                                     score = log2(o) - log2(e_donut)))
+  ## change the chromosome names style to UCSC (with prefix 'chr')
+  seqlevelsStyle(loops) <- 'UCSC'
+  return(loops)
+}
+GM12878_gi <- readData('GSE63525_GM12878_HiCCUPS_looplist.txt.gz')
+IMR90_gi <- readData('GSE63525_IMR90_HiCCUPS_looplist.txt.gz')
+
+```
+
+## Prepare the annotations
+
+```{r prepareAnno}
+hs_feature <- genes(TxDb.Hsapiens.UCSC.hg19.knownGene)
+hs_feature$symbol <- ChIPpeakAnno::xget(hs_feature$gene_id, org.Hs.egSYMBOL)
+## define the plot regions
+selectMarkers <- c('ADAMTS1', 'ADAMTS5', 'N6AMT1')
+hs_range <- hs_feature[hs_feature$symbol %in% selectMarkers]
+hs_rd <- range(hs_range)
+# subset the data
+IMR90_gi_sub <- subsetByOverlaps(IMR90_gi, hs_rd)
+GM12878_gi_sub <- subsetByOverlaps(GM12878_gi, hs_rd)
+
+## prepare the annotations
+feature.gr <- subsetByOverlaps(hs_feature,
+                               range(c(regions(IMR90_gi_sub),
+                                       regions(GM12878_gi_sub))))
+feature.gr <- feature.gr[seqnames(feature.gr) %in% seqnames(hs_rd)]
+feature.gr$label <- feature.gr$symbol
+## not label the gene outside the range
+feature.gr$label[end(feature.gr)<start(hs_rd) | start(feature.gr)>end(hs_rd)] <- NA
+## assign colors for the genes
+set.seed(1)
+feature.gr$col <- sample(2:7, length(feature.gr), replace=TRUE)
+## set the annotation type to 'gene'
+feature.gr$type <- 'gene'
+feature.gr
+```
+
+## Plot the data by `loopBouquetPlot` function.
+```{r loopBouquetPlot, fig.show="hold", out.width="50%"}
+op <- par(mfrow=c(1, 2))
+for(.gi in c('IMR90', 'GM12878')){
+  set.seed(123)
+  ## plot data
+  loopBouquetPlot(gi = get(paste0(.gi, '_gi_sub')),
+                  range = hs_rd,
+                  feature.gr = feature.gr,
+                  coor_tick_unit = 5e4,
+                  coor_mark_interval = 1e6,
+                  lwd.gene = 1,
+                  col.backbone = 'gray30',
+                  method = 2)
+  ## mark the sub-figure
+  grid::grid.text(label=.gi, x=.15, y=.9)
+}
+par(op)
+```
+
+In the figure, the LINC00161 and LINC00314 (Long Intergenic Non-Protein Coding RNA 161 and 314, both of them are reported in development of bone[@wang2016long,@shi2020long]) may also be involved in the _ADAMTS5_ gene regulation and expression event for cell IMR90 but not GM12878.
+
+# Case 2. plot called interactions around _MYC_ gene from ChIA-PET data
+
+The Chromatin Interaction Analysis with Paired-End-Tag sequencing (ChIA-PET) method encompasses chromatin immunoprecipitation (ChIP) to enrich long-range chromatin interactions bound to a protein of interest. Here, we visualize the chromatin interactions around the _MYC_ gene bound by RNA polymerase II (RNAPII) [@li2012extensive] using `loopBouquetPlot`. In this example, we highlight the effectiveness of `loopBouquetPlot` for peak-based loops.
+
+```{r loaddata2}
+hs_rd <- GRanges('chr8:127840755-129655603')
+## define the data file path
+extdata <- system.file('extdata', 
+                       'GSE33664',
+                       package='loopBouquetPlotDocumentation')
+readData <- function(interaction_file){
+  loops <- read.delim(
+    file.path(extdata,
+              interaction_file),
+    header=FALSE)
+  ## Use observed value/ expected value (donut)
+  loops <- with(loops, GInteractions(GRanges(V1, IRanges(V2+1, V3)),
+                                     GRanges(V4, IRanges(V5+1, V6)),
+                                     score = V8))
+  ## change the chromosome names style to UCSC (with prefix 'chr')
+  seqlevelsStyle(loops) <- 'UCSC'
+  return(loops)
+}
+K562_gi <- readData('K562.bedpe.gz')
+MCF7_gi <- readData('MCF7.bedpe.gz')
+
+K562_gi_sub <- subsetByOverlaps(K562_gi, hs_rd)
+MCF7_gi_sub <- subsetByOverlaps(MCF7_gi, hs_rd)
+
+## prepare the annotations
+feature.gr <- subsetByOverlaps(hs_feature,
+                               range(c(regions(K562_gi_sub),
+                                       regions(MCF7_gi_sub))))
+feature.gr <- feature.gr[seqnames(feature.gr) %in% seqnames(hs_rd)]
+feature.gr$label <- feature.gr$symbol
+## not label the gene outside the range
+feature.gr$label[end(feature.gr)<start(hs_rd) | start(feature.gr)>end(hs_rd)] <- NA
+## assign colors for the genes
+set.seed(2)
+feature.gr$col <- sample(2:7, length(feature.gr), replace=TRUE)
+## set the annotation type to 'gene'
+feature.gr$type <- 'gene'
+feature.gr
+```
+
+## Plot the data by `loopBouquetPlot` function.
+```{r loopBouquetPlot2, fig.show="hold", out.width="50%"}
+op <- par(mfrow=c(1, 2))
+for(.gi in c('K562', 'MCF7')){
+  set.seed(123)
+  ## plot data
+  loopBouquetPlot(gi = get(paste0(.gi, '_gi_sub')),
+                  range = hs_rd,
+                  feature.gr = feature.gr,
+                  coor_tick_unit = 5e4,
+                  coor_mark_interval = 1e6,
+                  lwd.gene = 1,
+                  col.backbone = 'gray30')
+  ## mark the sub-figure
+  grid::grid.text(label=.gi, x=.15, y=.8)
+}
+par(op)
+```
+In the figure, the upstream genes of _MYC_, such as _CASC8_, _POU5F1B_, and _PCAT1_ etc., are released from the complexity of RNAPII-bound-chromatin complex with _CASC11_, _MYC_, _PVT1_, etc in cell line K562 compared to MCF7.
+
+# sessionInfo
+
+```{r}
+sessionInfo()
+```
+
