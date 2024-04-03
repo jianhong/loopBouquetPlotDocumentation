@@ -1,7 +1,7 @@
 Function demo for trackViewer::loopBouquetPlot
 ================
 Authors: Jianhong Ou[^1]<br/>
-Last modified: 2024-02-09
+Last modified: 2024-04-03
 
 ## Overview
 
@@ -79,9 +79,10 @@ browseVignettes("loopBouquetPlotDocumentation")
 ```
 
 The source code for showcases are available at
-[Fig1](https://jianhong.github.io/loopBouquetPlotDocumentation/articles/Fig1.html)
+[Fig1](https://jianhong.github.io/loopBouquetPlotDocumentation/articles/Fig1.html),
+[Fig2](https://jianhong.github.io/loopBouquetPlotDocumentation/articles/MAPS.html)
 and
-[BrainComparativeEpigenome](https://jianhong.github.io/loopBouquetPlotDocumentation/articles/BrainComparativeEpigenome.html)
+[Fig3](https://jianhong.github.io/loopBouquetPlotDocumentation/articles/HumanSample.html)
 
 ### Contributions and Support
 
