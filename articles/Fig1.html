@@ -185,8 +185,8 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span><span class="op">(</span><span class="va">interactions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">extdata</span>,</span>
 <span>                     <span class="st">"10k.2.sig3Dinteractions.bedpe"</span>,</span>
 <span>                     full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/tmp/RtmpCOfNCx/temp_libpath342e183ac76/loopBouquetPlotDocumentation/extdata/0dpa.10k.2.sig3Dinteractions.bedpe"</span></span>
-<span><span class="co">## [2] "/tmp/RtmpCOfNCx/temp_libpath342e183ac76/loopBouquetPlotDocumentation/extdata/4dpa.10k.2.sig3Dinteractions.bedpe"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "/tmp/Rtmpt92CUe/temp_libpath342e592e3334/loopBouquetPlotDocumentation/extdata/0dpa.10k.2.sig3Dinteractions.bedpe"</span></span>
+<span><span class="co">## [2] "/tmp/Rtmpt92CUe/temp_libpath342e592e3334/loopBouquetPlotDocumentation/extdata/4dpa.10k.2.sig3Dinteractions.bedpe"</span></span></code></pre>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## import the loop for `loopBouquetPlot`</span></span>
 <span><span class="va">loops_loopBouquet</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">interactions</span>, <span class="kw">function</span><span class="op">(</span><span class="va">.ele</span><span class="op">)</span><span class="op">{</span></span>
@@ -215,8 +215,8 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span><span class="op">(</span><span class="va">bws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">extdata</span>,</span>
 <span>            <span class="st">"bigWig"</span>,</span>
 <span>            full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/tmp/RtmpCOfNCx/temp_libpath342e183ac76/loopBouquetPlotDocumentation/extdata/0dpa.bigWig"</span></span>
-<span><span class="co">## [2] "/tmp/RtmpCOfNCx/temp_libpath342e183ac76/loopBouquetPlotDocumentation/extdata/4dpa.bigWig"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "/tmp/Rtmpt92CUe/temp_libpath342e592e3334/loopBouquetPlotDocumentation/extdata/0dpa.bigWig"</span></span>
+<span><span class="co">## [2] "/tmp/Rtmpt92CUe/temp_libpath342e592e3334/loopBouquetPlotDocumentation/extdata/4dpa.bigWig"</span></span></code></pre>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## import the ATAC-seq signales</span></span>
 <span><span class="co">## the ATAC-seq signals are HiCAR R2 read coverage</span></span>
@@ -290,8 +290,8 @@ Brain Comparative Epigenome</a>. There are several steps to repeat the
 <span><span class="op">(</span><span class="va">hics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">extdata</span>,</span>
 <span>             <span class="st">"10000.ginteractions.rds"</span>,</span>
 <span>             full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/tmp/RtmpCOfNCx/temp_libpath342e183ac76/loopBouquetPlotDocumentation/extdata/MAPS_signals_0dpa.10000.ginteractions.rds"</span></span>
-<span><span class="co">## [2] "/tmp/RtmpCOfNCx/temp_libpath342e183ac76/loopBouquetPlotDocumentation/extdata/MAPS_signals_4dpa.10000.ginteractions.rds"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "/tmp/Rtmpt92CUe/temp_libpath342e592e3334/loopBouquetPlotDocumentation/extdata/MAPS_signals_0dpa.10000.ginteractions.rds"</span></span>
+<span><span class="co">## [2] "/tmp/Rtmpt92CUe/temp_libpath342e592e3334/loopBouquetPlotDocumentation/extdata/MAPS_signals_4dpa.10000.ginteractions.rds"</span></span></code></pre>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## set the sample names</span></span>
 <span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">hics</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"MAPS_signals_(.*?).10000.ginteractions.rds"</span>, <span class="st">"\\1 heatmap"</span>,</span>
