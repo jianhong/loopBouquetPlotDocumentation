@@ -17,6 +17,7 @@ output:
 ```{r preload, echo=FALSE, results="hide", warning=FALSE}
 suppressPackageStartupMessages({
   library(trackViewer)
+  library(geomeTriD)
   library(InteractionSet)
   library(org.Dr.eg.db)
   library(GenomicFeatures)
@@ -24,6 +25,8 @@ suppressPackageStartupMessages({
   library(GenomicRanges)
   library(RMariaDB)
   library(ChIPpeakAnno)
+  library(rgl)
+  library(manipulateWidget)
 })
 knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 ```
@@ -31,7 +34,7 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 # Introduction
 The `loopBouquetPlot` is a new method introduced by **trackViewer** package to visualize genomic interactions along with annotation for NGS dataset such as HiC, HiChIP, PLAC-seq, ChIA-PET, and HiCAR data.
 
-The Fig 1 is the showcase for the `loopBouquetPlot` compared to the heatmaps and links plot. Additional showcase are available at [`loopBouquetPlot` for Brain Comparative Epigenome](BrainComparativeEpigenome.html). There are several steps to repeat the `loopBouquetPlot`:
+The Fig 1 is the showcase for the `loopBouquetPlot` compared to the heatmaps and links plot. Additional showcase are available at [`loopBouquetPlot` for Human HiC and ChIA-PET data](HumanSample.html). There are several steps to repeat the `loopBouquetPlot`:
 
 1. Prepare the annotations
 
@@ -44,6 +47,7 @@ The Fig 1 is the showcase for the `loopBouquetPlot` compared to the heatmaps and
 # Load libraries
 ```{r loadPkg}
 library(trackViewer)
+library(geomeTriD)
 library(InteractionSet)
 library(org.Dr.eg.db)
 library(GenomicFeatures)
@@ -149,10 +153,10 @@ stopifnot(all(sub(' .*$', '', names(bwsigs))==
 set.seed(1) ## set seed to control the plot layout
 for(i in seq_along(loops_loopBouquet)){
   ## pdf(paste0(names(loops_loopBouquet)[i], '.pdf')) # if using terminal
-  trackViewer::loopBouquetPlot(loops_loopBouquet[[i]],
+  geomeTriD::loopBouquetPlot(loops_loopBouquet[[i]],
                                fig1PlotRange,
                                feature.gr,
-                               atacSig=bwsigs[[i]],
+                               genomicSigs=bwsigs[[i]],
                                lwd.backbone=2,
                                col.backbone='gray10',
                                col.backbone_background = 'gray70',
@@ -160,7 +164,7 @@ for(i in seq_along(loops_loopBouquet)){
                                show_coor = TRUE,
                                coor_tick_unit = 1e4,
                                coor_mark_interval=2e5,
-                               length.arrow=0.1,
+                               length.arrow=unit(0.1, 'inch'),
                                show_edges = FALSE)
   grid::grid.text(label=names(loops_loopBouquet)[i],
             x=.15, y=.9)
@@ -306,6 +310,7 @@ for(i in which(grepl('heatmap', names(tL)))){
 }
 ## dev.off() # if using terminal
 ```
+
 
 ## SessionInfo
 

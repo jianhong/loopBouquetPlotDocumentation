@@ -1,0 +1,287 @@
+---
+title: "mdsPlot"
+author: "Jianhong Ou"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  markdown::html_format:
+    options:
+      toc: true
+  rmarkdown::html_vignette:
+    toc: yes
+    fig_width: 5
+    fig_height: 5
+  html_document:
+    theme: simplex
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    fig_caption: true
+vignette: >
+  %\VignetteIndexEntry{mdsPlot} 
+  %\VignetteEngine{knitr::knitr}
+---
+
+
+```{r setup, echo=FALSE, results="hide"}
+options(rgl.useNULL=FALSE)
+suppressPackageStartupMessages(library(rgl))
+options(rgl.useNULL=TRUE)
+options(rgl.printRglwidget=FALSE)
+
+if (!requireNamespace("rmarkdown", quietly = TRUE)) {
+  warning(call. = FALSE, "These vignettes assume rmarkdown is installed.  It was not found.")
+  knitr::knit_exit()
+}
+# If Pandoc is not installed, the output format won't be set.
+# knitr uses it to determine whether to do
+# screenshots; we don't want those. see https://github.com/rstudio/markdown/issues/115
+
+knitr::opts_knit$set(screenshot.force = FALSE)
+  
+# knitr::opts_chunk$set(snapshot = TRUE)  # for snapshots instead of dynamic
+
+setupKnitr(autoprint = FALSE)
+
+suppressPackageStartupMessages({
+  library(trackViewer)
+  library(geomeTriD)
+  library(InteractionSet)
+  library(org.Dr.eg.db)
+  library(GenomicFeatures)
+  library(GenomeInfoDb)
+  library(GenomicRanges)
+  library(RMariaDB)
+  library(ChIPpeakAnno)
+  library(manipulateWidget)
+})
+```
+# Introduction
+
+By converting observed Hi-C contact frequencies into spatial distances, various algorithms—including optimization-based methods (such as MDS-type or manifold learning techniques), probabilistic approaches (such as the MCMC strategy), and state-of-the-art algorithms—are applied to reconstruct 3D genomes. 
+These available methods—including, but not limited to, miniMDS, NMDS, Chrom3D, Chromosome3D, MOGEN, InfMod3DGen, BACH, HSA, ChromSDE, AutoChrom3D, ISD, ShRec3D, GEM-FISH, Hierarchical3DGenome, RPR, SuperRec, ShNeigh, PASTIS, and FLAMINGO—can predict spatial distances either at low resolutions within specific genomic segments or at high resolutions.
+
+Please note that these methods rely on a bin-based interaction contact matrix and do not work for peak-based interactions. They are also based on the assumption that both anchors follow the same distribution (all-to-all or one-to-one) when constructing the contact matrix, which does not always apply to HiChIP, ChIA-PET, or HiCAR experiments.
+
+# Load libraries
+```{r loadPkg}
+library(trackViewer)
+library(geomeTriD)
+library(InteractionSet)
+library(org.Dr.eg.db)
+library(GenomicFeatures)
+library(GenomeInfoDb)
+library(GenomicRanges)
+library(RMariaDB)
+library(ChIPpeakAnno)
+library(grid)
+```
+
+# Prepare annotation
+
+This data were downloaded from GEO with accession [GSE231771](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE231771).
+
+```{r gene}
+## prepare the TxDb object,
+## or load the refseq gene annotation by library(TxDb.Drerio.UCSC.danRer11.refGene)
+txdb <- txdbmaker::makeTxDbFromEnsembl(release=109, organism='Danio rerio')
+## set the silencer coordinates
+silencer <- GRanges("chr5", IRanges(21795000, 21800000))
+## set data range
+range <- GRanges("chr5", IRanges(21100000, 22100000))
+## set the plot range
+fig1PlotRange <- GRanges('chr5', IRanges(21300000, 2.2e+07))
+
+## prepare gene annotation
+genes <- GenomicFeatures::genes(txdb)
+GenomeInfoDb::seqlevelsStyle(genes) <- "UCSC"
+genes <- subsetByOverlaps(genes, range, ignore.strand=TRUE)
+id <- genes$gene_id
+eid <- ChIPpeakAnno::xget(id, org.Dr.egENSEMBL2EG, output = "first")
+symbol <- id
+symbol[!is.na(eid)] <- ChIPpeakAnno::xget(eid[!is.na(eid)],
+                                          org.Dr.egSYMBOL,
+                                          output = "first")
+names(symbol) <- id
+
+feature.gr <- subsetByOverlaps(genes, range, ignore.strand=TRUE)
+feature.gr$label <- symbol[feature.gr$gene_id]
+# remove genes without symbols to clean the plot
+feature.gr <- feature.gr[!grepl('ENSDARG', feature.gr$label)]
+feature.gr$type <- 'gene'
+feature.gr$col <- 1 # set black color to uninterested genes
+feature.gr$col[feature.gr$label %in% c('tenm1', 'smarca1', 'sh2d1aa')] <- 
+  c(2, 4, 5) ## set the colors for the given genes
+silencer$label <- 'silencer'
+silencer$type <- 'cRE' ## cis regulatory element
+silencer$col <- 3 ## set the color to green
+silencer$pch <- 7 ## set the point as a cross in a square
+feature.gr <- c(feature.gr, silencer)
+```
+
+## Import ATAC-seq signals
+
+```{r import4loopBouquetPlot}
+## set the data folder, all data are available in the extdata folder of this package
+extdata <- system.file('extdata', package='loopBouquetPlotDocumentation')
+## list all ATAC-seq bigwig files
+bws <- dir(extdata, "bigWig", full.names = TRUE)
+## import the ATAC-seq signales
+## the ATAC-seq signals are HiCAR R2 read coverage
+bwsigs <- lapply(bws, trackViewer::importScore, format="BigWig", ranges=range)
+## create names for the data for each sample
+(names(bwsigs) <-sub('.bigWig', ' ATAC-seq', basename(bws)))
+## get the hic files. Here we use the prepared GInteraction objects
+hics <- dir(extdata, "10000.ginteractions.rds", full.names = TRUE)
+## set the sample names
+(names(hics) <- sub("MAPS_signals_(.*?).10000.ginteractions.rds", "\\1 heatmap",
+                    basename(hics)))
+gis <- lapply(hics, function(.ele){
+  ## The RDS files were generated by trackViewer function `importGInteractions`
+  ## from the HIC file. Because the MAPS signal are values normalized by
+  ## fitting models, we set the matrixType to 'observed' and normalization to 'NONE'
+  ## range.ext are ranges with extension to include all the intrachromosal interactions
+  # range.ext <- range
+  # start(range.ext) <- start(range.ext) - 10000000
+  # end(range.ext) <- end(range.ext) + 10000000
+  # importGInteractions(.ele, ranges = range.ext,
+  #                     format = "hic",
+  #                     resolution = 10000,
+  #                     out = "GInteractions",
+  #                     normalization = "NONE",
+  #                     matrixType = "observed")
+  .ele <- readRDS(.ele)
+})
+
+```
+
+## mdsPlot
+
+### 2D plot
+
+```{r, mdsPlot2d, fig.show="hold", out.width="50%"}
+set.seed(1) ## set seed to control the plot layout
+for(i in seq_along(gis)){
+  ## pdf(paste0(names(gis)[i], '.pdf')) # if using terminal
+  geomeTriD::mdsPlot(gis[[i]],
+                       fig1PlotRange,
+                       feature.gr,
+                       genomicSigs=bwsigs[[i]],
+                       lwd.backbone=2,
+                       col.backbone='gray10',
+                       col.backbone_background = 'gray70',
+                       lwd.gene = 2,
+                       show_coor = TRUE,
+                       coor_tick_unit = 1e4,
+                       coor_mark_interval=2e5,
+                       length.arrow=unit(0.1, 'inch'))
+  grid::grid.text(label=names(gis)[i],
+            x=.15, y=.9)
+  ## dev.off() # if using terminal
+}
+```
+
+### 3D plot
+
+```{r, mdsPlot3d1, warning=FALSE, message=FALSE, fig.show="hold"}
+set.seed(1) ## set seed to control the plot layout
+library(rgl)
+library(manipulateWidget)
+i <- 1
+geomeTriD::mdsPlot(gis[[i]],
+                       fig1PlotRange,
+                       feature.gr,
+                       genomicSigs=bwsigs[[i]],
+                       lwd.backbone=1,
+                       col.backbone='gray10',
+                       col.backbone_background = 'gray70',
+                       lwd.gene = 2,
+                       show_coor = TRUE,
+                       coor_tick_unit = 1e4,
+                       coor_mark_interval=2e5,
+                       length.arrow=unit(0.1, 'inch'),
+                       k=3)
+eID <- paste0("mdsPlot3drgl", i)
+rglwidget(elementId = eID)
+widget <- lapply(c('tick_labels', 'tick_minor', 'tick_major', 
+                   'atac_signal', 'backbone', 'gene_body', 'tss_labels',
+                   'gene_labels', 'cRE'), function(.ele){
+                     toggleWidget(sceneId = eID, tags = .ele)
+                   })
+manipulateWidget::combineWidgets(list=widget)
+```
+
+```{r, mdsPlot3d2, warning=FALSE, message=FALSE, fig.show="hold"}
+set.seed(1) ## set seed to control the plot layout
+#library(manipulateWidget)
+i <- 2
+geomeTriD::mdsPlot(gis[[i]],
+                       fig1PlotRange,
+                       feature.gr,
+                       genomicSigs=bwsigs[[i]],
+                       lwd.backbone=1,
+                       col.backbone='gray10',
+                       col.backbone_background = 'gray70',
+                       lwd.gene = 2,
+                       show_coor = TRUE,
+                       coor_tick_unit = 1e4,
+                       coor_mark_interval=2e5,
+                       k=3)
+eID <- paste0("mdsPlot3drgl", i)
+rglwidget(elementId = eID)
+widget <- lapply(c('tick_labels', 'tick_minor', 'tick_major', 
+                   'atac_signal', 'backbone', 'gene_body', 'tss_labels',
+                   'gene_labels', 'cRE'), function(.ele){
+                     toggleWidget(sceneId = eID, tags = .ele)
+                   })
+manipulateWidget::combineWidgets(list=widget)
+```
+
+## Plot data process by available softwares
+
+`trackViewer` ask input as a GRanges object with meta data of x,y,z coordinates.
+
+### Plot ShRec3D results
+
+ShRec3D can handler very sparse matrix, here we use the MAPS normalized matrix as input contact matrix.
+
+```{r ShRec3D, warning=FALSE, message=FALSE}
+
+```
+
+
+### Plot FLAMINGO results
+
+The FLAMINGO can not handle MAPS normalized matrix because of the very sparse matrix, here we use the raw single normalized by KR as FLAMINGO input.
+
+
+```{r FLAMINGO, warning=FALSE, message=FALSE}
+## list all FLAMINGO output files
+flamingo <- dir(extdata, pattern="*.chr5.flamingo.rds", full.names = TRUE)
+names(flamingo) <- 
+  sub('^.*danRer11.fishfin.(.dpa).chr5.flamingo.rds', '\\1',flamingo )
+flamingo.gr <- lapply(flamingo, readRDS)
+flamingo.gr <- lapply(flamingo.gr,
+                      function(.ele) subsetByOverlaps(.ele, range, type = 'within'))
+view3dStructure(flamingo.gr[['0dpa']],
+                k=3, feature.gr=feature.gr,
+                genomicSigs=bwsigs[['0dpa ATAC-seq']],
+                length.arrow=
+                  unit(abs(diff(range(flamingo.gr[['0dpa']]$x)))/20,
+                       'native'),
+                renderer = 'threejs')
+
+view3dStructure(flamingo.gr[['4dpa']],
+                k=3, feature.gr=feature.gr,
+                genomicSigs=bwsigs[['4dpa ATAC-seq']],
+                length.arrow=
+                  unit(abs(diff(range(flamingo.gr[['0dpa']]$x)))/20,
+                       'native'),
+                renderer = 'threejs')
+```
+
+
+## SessionInfo
+
+```{r sessionInfo}
+sessionInfo()
+```

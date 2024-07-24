@@ -20,6 +20,7 @@ output:
 suppressPackageStartupMessages({
   library(InteractionSet)
   library(trackViewer)
+  library(geomeTriD)
   library(TxDb.Hsapiens.UCSC.hg19.knownGene)
   library(org.Hs.eg.db)
   library(rtracklayer)
@@ -44,6 +45,7 @@ There are several steps to repeat the plots:
 
 ```{r pkgload}
 library(trackViewer)
+library(geomeTriD)
 library(InteractionSet)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(org.Hs.eg.db)

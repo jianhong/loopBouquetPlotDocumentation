@@ -7,3 +7,5 @@ inst/doc
 *~
 *.Rproj
 README.Rmd
+*.hic
+ignore

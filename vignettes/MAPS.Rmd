@@ -19,6 +19,7 @@ output:
 ```{r setup, include=FALSE}
 library(InteractionSet)
 library(trackViewer)
+library(geomeTriD)
 library(ChIPpeakAnno)
 library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 library(org.Mm.eg.db)
@@ -32,6 +33,7 @@ To demonstrate the utility of `loopBouquetPlot` in comparing different loop call
 ```{r loadlibrary}
 library(InteractionSet)
 library(trackViewer)
+library(geomeTriD)
 library(ChIPpeakAnno)
 library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 library(org.Mm.eg.db)
@@ -231,6 +233,49 @@ end(regions(gi_sub)) <- end(regions(gi_sub))-5000
 addInteractionAnnotation(gi_sub, "H3K4me3 heatmap",
                          grid.polygon,
                          gp=gpar(col="#009E73", lwd=2, lty=2, fill=NA))
+```
+
+### Plot FLAMINGO results
+
+Here we use the raw single normalized by KR as FLAMINGO input. 
+The FLAMINGO results will be ploted in the same region above.
+
+
+```{r FLAMINGO, warning=FALSE, message=FALSE}
+## list all FLAMINGO output files
+flamingo <- dir(extdata, pattern=".*chr10.flamingo.rds", full.names = TRUE)
+names(flamingo) <- 
+  sub('^(.*).chr10.flamingo.rds', '\\1', basename(flamingo) )
+flamingo.gr <- lapply(flamingo, readRDS)
+flamingo.gr <- lapply(flamingo.gr,
+                      function(.ele) subsetByOverlaps(.ele, mm_range, type = 'within'))
+view3dStructure(flamingo.gr[['CTCF']],
+                k=3, feature.gr=mm_feature.gr,
+                length.arrow=
+                  unit(abs(diff(range(flamingo.gr[['CTCF']]$x)))/20,
+                       'native'))
+eID <- 'flamingo.CTCF'
+rglwidget(elementId = eID)
+widget <- lapply(c('tick_labels', 'tick_minor', 'tick_major', 
+                   'atac_signal', 'backbone', 'gene_body', 'tss_labels',
+                   'gene_labels', 'cRE'), function(.ele){
+                     toggleWidget(sceneId = eID, tags = .ele)
+                   })
+manipulateWidget::combineWidgets(list=widget)
+
+view3dStructure(flamingo.gr[['H3K4me3']],
+                k=3, feature.gr=mm_feature.gr,
+                length.arrow=
+                  unit(abs(diff(range(flamingo.gr[['H3K4me3']]$x)))/20,
+                       'native'))
+eID <- 'flamingo.H3K4me3'
+rglwidget(elementId = eID)
+widget <- lapply(c('tick_labels', 'tick_minor', 'tick_major', 
+                   'atac_signal', 'backbone', 'gene_body', 'tss_labels',
+                   'gene_labels', 'cRE'), function(.ele){
+                     toggleWidget(sceneId = eID, tags = .ele)
+                   })
+manipulateWidget::combineWidgets(list=widget)
 ```
 
 # sessionInfo
