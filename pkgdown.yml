@@ -1,12 +1,12 @@
-pandoc: 3.1.1
-pkgdown: 2.0.7
+pandoc: '3.2'
+pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
   Fig1: Fig1.html
   HumanSample: HumanSample.html
   MAPS: MAPS.html
-last_built: 2024-04-03T14:23Z
+  mdsPlot: mdsPlot.html
+last_built: 2024-07-29T16:06Z
 urls:
   reference: https://jianhong.github.io/loopBouquetPlotDocumentation/reference
   article: https://jianhong.github.io/loopBouquetPlotDocumentation/articles
-
