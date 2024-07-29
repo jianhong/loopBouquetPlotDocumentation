@@ -9,3 +9,5 @@ inst/doc
 README.Rmd
 *.hic
 ignore
+/doc/
+/Meta/

@@ -3,13 +3,6 @@ title: "mdsPlot"
 author: "Jianhong Ou"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
-  markdown::html_format:
-    options:
-      toc: true
-  rmarkdown::html_vignette:
-    toc: yes
-    fig_width: 5
-    fig_height: 5
   html_document:
     theme: simplex
     toc: true
@@ -18,32 +11,14 @@ output:
     fig_caption: true
 vignette: >
   %\VignetteIndexEntry{mdsPlot} 
-  %\VignetteEngine{knitr::knitr}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 
 ```{r setup, echo=FALSE, results="hide"}
-options(rgl.useNULL=FALSE)
-suppressPackageStartupMessages(library(rgl))
-options(rgl.useNULL=TRUE)
-options(rgl.printRglwidget=FALSE)
-
-if (!requireNamespace("rmarkdown", quietly = TRUE)) {
-  warning(call. = FALSE, "These vignettes assume rmarkdown is installed.  It was not found.")
-  knitr::knit_exit()
-}
-# If Pandoc is not installed, the output format won't be set.
-# knitr uses it to determine whether to do
-# screenshots; we don't want those. see https://github.com/rstudio/markdown/issues/115
-
-knitr::opts_knit$set(screenshot.force = FALSE)
-  
-# knitr::opts_chunk$set(snapshot = TRUE)  # for snapshots instead of dynamic
-
-setupKnitr(autoprint = FALSE)
-
 suppressPackageStartupMessages({
   library(trackViewer)
+  library(rgl)
   library(geomeTriD)
   library(InteractionSet)
   library(org.Dr.eg.db)
@@ -202,8 +177,8 @@ geomeTriD::mdsPlot(gis[[i]],
                        k=3)
 eID <- paste0("mdsPlot3drgl", i)
 rglwidget(elementId = eID)
-widget <- lapply(c('tick_labels', 'tick_minor', 'tick_major', 
-                   'atac_signal', 'backbone', 'gene_body', 'tss_labels',
+widget <- lapply(c('tick_labels', 'tick_minor', 'tick_major',
+                   'genomic_signal', 'backbone', 'gene_body', 'tss_labels',
                    'gene_labels', 'cRE'), function(.ele){
                      toggleWidget(sceneId = eID, tags = .ele)
                    })
@@ -228,8 +203,8 @@ geomeTriD::mdsPlot(gis[[i]],
                        k=3)
 eID <- paste0("mdsPlot3drgl", i)
 rglwidget(elementId = eID)
-widget <- lapply(c('tick_labels', 'tick_minor', 'tick_major', 
-                   'atac_signal', 'backbone', 'gene_body', 'tss_labels',
+widget <- lapply(c('tick_labels', 'tick_minor', 'tick_major',
+                   'genomic_signal', 'backbone', 'gene_body', 'tss_labels',
                    'gene_labels', 'cRE'), function(.ele){
                      toggleWidget(sceneId = eID, tags = .ele)
                    })
@@ -245,7 +220,7 @@ manipulateWidget::combineWidgets(list=widget)
 ShRec3D can handler very sparse matrix, here we use the MAPS normalized matrix as input contact matrix.
 
 ```{r ShRec3D, warning=FALSE, message=FALSE}
-
+#TODO
 ```
 
 
@@ -274,7 +249,7 @@ view3dStructure(flamingo.gr[['4dpa']],
                 k=3, feature.gr=feature.gr,
                 genomicSigs=bwsigs[['4dpa ATAC-seq']],
                 length.arrow=
-                  unit(abs(diff(range(flamingo.gr[['0dpa']]$x)))/20,
+                  unit(abs(diff(range(flamingo.gr[['4dpa']]$x)))/20,
                        'native'),
                 renderer = 'threejs')
 ```

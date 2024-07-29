@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 ^.*\.hic$
 ignore/*
+^doc$
+^Meta$

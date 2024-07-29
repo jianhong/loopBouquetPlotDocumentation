@@ -1,7 +1,7 @@
 Package: loopBouquetPlotDocumentation
 Type: Package
 Title: The documentation for loopBouquetPlot function
-Version: 0.0.4
+Version: 0.0.5
 Authors@R: c(person(given="Jianhong", family="Ou", email="jianhong.ou@duke.edu", 
                  role=c("aut", "cre"), comment=c(ORCID="0000-0002-8652-2488")))
 Description: The data and scripts to help users to generate plots.
@@ -13,7 +13,7 @@ Imports: trackViewer, InteractionSet, GenomicFeatures, GenomicRanges, RMariaDB,
          TxDb.Hsapiens.UCSC.hg38.knownGene, TxDb.Mmusculus.UCSC.mm10.knownGene,
          org.Hs.eg.db, org.Mm.eg.db, biomaRt, TxDb.Drerio.UCSC.danRer10.refGene,
          TxDb.Hsapiens.UCSC.hg19.knownGene, TxDb.Mmulatta.UCSC.rheMac10.refGene,
-         org.Mmu.eg.db, rtracklayer, manipulateWidget
+         org.Mmu.eg.db, rtracklayer, manipulateWidget, txdbmaker, rgl, geomeTriD
 Remotes: jianhong/geometrid
 Suggests: knitr, rmarkdown, pkgdown, bookdown, pander
 License: MIT + file LICENSE

@@ -1,3 +1,6 @@
+# Change in 0.0.5
+  - Fix multiple issues to make the build without error.
+  
 # Change in 0.0.4
   - Change from trackViewer package to geomeTriD package.
   
